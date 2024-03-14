@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>12 - Translating with matrix</title>
+  <title>15 - Combining matrices</title>
 
   <style>
       
@@ -43,7 +43,7 @@
   <a id="go-back" href="/">Go Back</a>
 
   <div id="container">
-    <h1>12 - Translating with matrix</h1>
+    <h1>15 - Combining matrices</h1>
     <canvas id="canvas"></canvas>
   </div>
 
@@ -52,6 +52,8 @@
 
     const VERTEX_SHADER_SOURCE = `
       uniform mat4 translationMatrix;
+      uniform mat4 scaleMatrix;
+      uniform mat4 rotationMatrix;
 
       attribute vec4 position;
       attribute vec4 color;
@@ -59,7 +61,7 @@
       varying vec4 v_color;
 
       void main () {
-        gl_Position = translationMatrix * position;
+        gl_Position = translationMatrix * rotationMatrix * scaleMatrix * position;
 
         v_color = color;
       }
@@ -120,13 +122,34 @@
     // Look up "color" attribute variable location on our GPU
     const colorAttributeLocationOnGPU = gl.getAttribLocation(drawingProgram, 'color') // 1
 
-    // Look up "translationMatrix" uniform variable location on our GPU
 
     // Before we can look up uniform variable locations on our GPU, we must explicitly use the appropriate WebGLProgram that we are interested in
     gl.useProgram(drawingProgram)
-    const translationMatrixUniformLocationOnGPU = gl.getUniformLocation(drawingProgram, 'translationMatrix')
+
+    // Look up translate matrix uniform variable on GPU
+    const translatioMatrixUniformLocationOnGPU = gl.getUniformLocation(drawingProgram, 'translationMatrix')
 
     const translationMatrix = new Float32Array([
+      1.0, 0.0, 0.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 1.0
+    ])
+
+    // Look up rotation matrix uniform variable on GPU
+    const rotationMatrixUniformLocationOnGPU = gl.getUniformLocation(drawingProgram, 'rotationMatrix')
+
+    const rotationMatrix = new Float32Array([
+      1.0, 0.0, 0.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 1.0
+    ])
+
+    // Look up scale matrix uniform variable on GPU
+    const scaleMatrixUniformLocationOnGPU = gl.getUniformLocation(drawingProgram, 'scaleMatrix')
+
+    const scaleMatrix = new Float32Array([
       1.0, 0.0, 0.0, 0.0,
       0.0, 1.0, 0.0, 0.0,
       0.0, 0.0, 1.0, 0.0,
@@ -181,8 +204,27 @@
       translationMatrix[12] = Math.cos(-timeElapsedSinceStart) * moveRadius
       translationMatrix[13] = Math.sin(-timeElapsedSinceStart) * moveRadius
 
-      // Pass the time elapsed since the start of my render loop to my drawingProgram
-      gl.uniformMatrix4fv(translationMatrixUniformLocationOnGPU, false, translationMatrix)
+      // Apply rotation to our mat4 rotationMatrix
+      const rotationAngleX = Math.cos(timeElapsedSinceStart)
+      const rotationAngleY = Math.sin(timeElapsedSinceStart)
+      rotationMatrix[0] = rotationAngleX
+      rotationMatrix[1] = -rotationAngleY
+      rotationMatrix[4] = rotationAngleY
+      rotationMatrix[5] = rotationAngleX
+
+      // Apply scale to our mat4 scaleMatrix
+      const scaleRadius = 0.5
+      scaleMatrix[0] = Math.sin(timeElapsedSinceStart * 3) * scaleRadius + 0.65
+      scaleMatrix[5] = Math.sin(timeElapsedSinceStart * 3) * scaleRadius + 0.65
+
+      // Pass 4x4 translationMatirx float32array to GPU
+      gl.uniformMatrix4fv(translatioMatrixUniformLocationOnGPU, false, translationMatrix)
+
+      // Pass 4x4 rotationMatrix float32array to GPU
+      gl.uniformMatrix4fv(rotationMatrixUniformLocationOnGPU, false, rotationMatrix)
+
+      // Pass 4x4 scaleMatrix float32array to GPU
+      gl.uniformMatrix4fv(scaleMatrixUniformLocationOnGPU, false, scaleMatrix)
 
       // Issue a draw command using my active WebGLProgram
       gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2)
@@ -229,16 +271,7 @@
 
 
 
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-204513506-4"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'UA-204513506-4');
-  </script>
-
+ 
   
 </body>
 </html>

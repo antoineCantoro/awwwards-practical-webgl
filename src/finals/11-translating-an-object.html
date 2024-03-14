@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>06 - Drawing a triangle</title>
+  <title>11 - Translating an object</title>
 
   <style>
       
@@ -43,7 +43,7 @@
   <a id="go-back" href="/">Go Back</a>
 
   <div id="container">
-    <h1>06 - Drawing a triangle</h1>
+    <h1>11 - Translating an object</h1>
     <canvas id="canvas"></canvas>
   </div>
 
@@ -51,13 +51,22 @@
 
 
     const VERTEX_SHADER_SOURCE = `
+      uniform float time;
+
       attribute vec4 position;
       attribute vec4 color;
 
       varying vec4 v_color;
 
       void main () {
-        gl_Position = position;
+        float moveRadius = 0.5;
+        vec4 offset = vec4(
+          cos(-time) * moveRadius,
+          sin(-time) * moveRadius,
+          0.0,
+          0.0
+        );
+        gl_Position = position + offset;
 
         v_color = color;
       }
@@ -118,9 +127,18 @@
     // Look up "color" attribute variable location on our GPU
     const colorAttributeLocationOnGPU = gl.getAttribLocation(drawingProgram, 'color') // 1
 
+    // Look up "time" uniform variable location on our GPU
+
+    // Before we can look up uniform variable locations on our GPU, we must explicitly use the appropriate WebGLProgram that we are interested in
+    gl.useProgram(drawingProgram)
+    const timeUniformLocationOnGPU = gl.getUniformLocation(drawingProgram, 'time')
+
     // Rendering loop
     requestAnimationFrame(renderFrame)
-    function renderFrame () {
+
+    function renderFrame (timeElapsedSinceStart) {
+      timeElapsedSinceStart /= 1000
+
       requestAnimationFrame(renderFrame)
 
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
@@ -132,7 +150,7 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
 
         // Supply positions float 32 bit array to WebGLBuffer (vertexBuffer)
-        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.DYNAMIC_DRAW)
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
 
         // Explicitly enable "position" variable on GPU
         gl.enableVertexAttribArray(positionAttributeLocationOnGPU)
@@ -146,7 +164,7 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
 
         // Supply colors float 32 bit array to WebGLBuffer (gl.ARRAY_BUFFER)
-        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW)
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW)
 
         // Explicitly enable "color" variable on GPU
         gl.enableVertexAttribArray(colorAttributeLocationOnGPU)
@@ -157,6 +175,9 @@
 
       // Explicitly use my WebGLProgram that I am interested in drawing with
       gl.useProgram(drawingProgram)
+
+      // Pass the time elapsed since the start of my render loop to my drawingProgram
+      gl.uniform1f(timeUniformLocationOnGPU, timeElapsedSinceStart)
 
       // Issue a draw command using my active WebGLProgram
       gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2)
@@ -203,16 +224,7 @@
 
 
 
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-204513506-4"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'UA-204513506-4');
-  </script>
-
+ 
   
 </body>
 </html>

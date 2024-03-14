@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>08 - Image as a texture</title>
+  <title>10 - HTML5 Canvas as a texture</title>
 
   <style>
       
@@ -47,7 +47,7 @@
   <a id="go-back" href="/">Go Back</a>
 
   <div id="container">
-    <h1>08 - Image as a texture</h1>
+    <h1>10 - HTML5 Canvas as a texture</h1>
     <div id="texture-controls">
       <div>
         <label for="texture-scale">Texture Scale:</label>
@@ -188,13 +188,56 @@
     // Create a WebGLTexture
     const texture = gl.createTexture()
 
-    const image = new Image()
-    
-    image.onload = onImageLoaded
+    const canvasTexture = document.createElement('canvas')
+    canvasTexture.width = 1024
+    canvasTexture.height = 1024
+    const canvasTextureRenderContext = canvasTexture.getContext('2d')
 
-    image.src = '/assets/water-texture.png'
+    const NUMBER_OF_CIRCLES_IN_TEXTURE = 75
+    for (let i = 0; i < NUMBER_OF_CIRCLES_IN_TEXTURE; i++) {
+      const randR = Math.floor(Math.random() * 255)
+      const randG = Math.floor(Math.random() * 255)
+      const randB = Math.floor(Math.random() * 255)
+      const randAlpha = Math.random()
+      const randColor = `rgba(${randR}, ${randG}, ${randB}, ${randAlpha})`
 
+      const randX = Math.random() * canvasTexture.width
+      const randY = Math.random() * canvasTexture.height
+      const randRadius = 50 + Math.random() * 250
+      
+      canvasTextureRenderContext.fillStyle = randColor
+      canvasTextureRenderContext.beginPath()
+      canvasTextureRenderContext.arc(randX, randY, randRadius, 0, Math.PI * 2, false)
+      canvasTextureRenderContext.closePath()
+      canvasTextureRenderContext.fill()
+    }
 
+    canvasTextureRenderContext.fillStyle = 'white'
+    canvasTextureRenderContext.textAlign = 'center'
+    canvasTextureRenderContext.font = '48px sans-serif'
+    canvasTextureRenderContext.fillText('This texture is programmatically generated', canvasTexture.width / 2, canvasTexture.height / 2)
+
+    // Bind our texture to the global WebGL gl.TEXTURE_2D binding point
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+
+    // Set the x wrapping mode for our active gl.TEXTURE_2D (texture)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[textureWrapSMode])
+    // Set the y wrapping mode for our active gl.TEXTURE_2D (texture)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[textureWrapTMode])
+    // Set the min filter for our active gl.TEXTURE_2D
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[textureMinFilter])
+    // Set the mag filter for our active gl.TEXTURE_2D
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[textureMagFilter])
+
+    // Supply the image to the newly created gl.TEXTURE_2D (texture)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, canvasTexture)
+
+    // Generate mipmap levels for our texture
+    gl.generateMipmap(gl.TEXTURE_2D)
+
+    gl.bindTexture(gl.TEXTURE_2D, null)
 
     // Get references to <select /> widgets and listen to change events
     const wrapSModeSelect = document.getElementById('texture-wrap-s-mode')
@@ -230,31 +273,6 @@
 
     function onMagFilterModeSelect (event) {
       textureMagFilter = event.target.value
-    }
-
-    function onImageLoaded () {
-      // Bind our texture to the global WebGL gl.TEXTURE_2D binding point
-      gl.bindTexture(gl.TEXTURE_2D, texture)
-
-
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-
-      // Set the x wrapping mode for our active gl.TEXTURE_2D (texture)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[textureWrapSMode])
-      // Set the y wrapping mode for our active gl.TEXTURE_2D (texture)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[textureWrapTMode])
-      // Set the min filter for our active gl.TEXTURE_2D
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[textureMinFilter])
-      // Set the mag filter for our active gl.TEXTURE_2D
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[textureMagFilter])
-
-      // Supply the image to the newly created gl.TEXTURE_2D (texture)
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image)
-
-      // Generate mipmap levels for our texture
-      gl.generateMipmap(gl.TEXTURE_2D)
-
-      gl.bindTexture(gl.TEXTURE_2D, null)
     }
 
     // Rendering loop
@@ -315,28 +333,25 @@
       // Look up uniform variable location for texture scale factor in our WebGLProgram
       const textureScaleFactorLocationOnGPU = gl.getUniformLocation(drawingProgram, 'textureScaleFactor')
       gl.uniform1f(textureScaleFactorLocationOnGPU, textureScaleFactor)
+      
+      // Active texture unit at index 0
+      gl.activeTexture(gl.TEXTURE0)
+      // Bind "texture" to active gl.TEXTURE_2D
+      gl.bindTexture(gl.TEXTURE_2D, texture)
 
-      if (image.complete) {
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
 
-        // Active texture unit at index 0
-        gl.activeTexture(gl.TEXTURE0)
-        // Bind "texture" to active gl.TEXTURE_2D
-        gl.bindTexture(gl.TEXTURE_2D, texture)
+      // Set the x wrapping mode for our active gl.TEXTURE_2D (texture)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[textureWrapSMode])
+      // Set the y wrapping mode for our active gl.TEXTURE_2D (texture)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[textureWrapTMode])
+      // Set the min filter for our active gl.TEXTURE_2D
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[textureMinFilter])
+      // Set the mag filter for our active gl.TEXTURE_2D
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[textureMagFilter])
 
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-
-        // Set the x wrapping mode for our active gl.TEXTURE_2D (texture)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[textureWrapSMode])
-        // Set the y wrapping mode for our active gl.TEXTURE_2D (texture)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[textureWrapTMode])
-        // Set the min filter for our active gl.TEXTURE_2D
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[textureMinFilter])
-        // Set the mag filter for our active gl.TEXTURE_2D
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[textureMagFilter])
-
-        // Supply the image to the newly created gl.TEXTURE_2D (texture)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image)
-      }
+      // Supply the HTMLCanvas to the newly created gl.TEXTURE_2D (texture)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, canvasTexture)
 
       // Issue a draw command using my active WebGLProgram
       gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
@@ -383,16 +398,7 @@
 
 
 
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-204513506-4"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'UA-204513506-4');
-  </script>
-
+ 
   
 </body>
 </html>
