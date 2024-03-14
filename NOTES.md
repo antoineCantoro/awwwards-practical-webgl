@@ -130,6 +130,33 @@ Corrdonnées d'un point (x, y par exmeple pour de la 2D) stocké dans un Float32
 
 En WebGL, le centre de l'écran est représenté par les coordonnées [0,0], Les valeurs allant de -1 à 1 pour les bords de l'écran.
 
-Dans ce cas, l'angle en haut à gauche de l'écran a pour coordonénes [-1,-1], tandis que l'angle en bas à droite a pour coordonnées [1,1].
+Dans ce cas, l'angle en haut à gauche de l'écran a pour coordonénes [-1,1], tandis que l'angle en bas à droite a pour coordonnées [1,-1].
 
 
+### 2-4 - Adding points on mouse click
+
+Dans le cas où l'on souhaite gérer aléatoirement les couleurs de nos carrés depuis le javascript, on va faire passer un attribut "color" qui sera tranmis au fragment shader. Sauf que le fragment shader ne peut pas avoir directement accès aux attributs, il faut qu'ils soivent transmis par le vertex. Pour cela on doit définir un "variyng" qui sera ensuite disponilbe dans le fragment.
+
+```
+  vertex shader : vertex.glsl
+    const vertexShaderSource = `
+      attribute vec4 position;
+      attribute vec4 color; // 1. On réccupère la couleur dans le vertex
+
+      varying vec4 vColor; // 2. On défini un varying vColor
+
+      void main() {
+        vColor = color; // 3. On défini la valeur du varying
+        gl_Position = position;
+        gl_PointSize = 20.0;
+      }
+    `
+  
+  fragment shader : fragment.glsl
+    const fragmentShaderSource = `
+      varying vec4 vColor; // 4. On récupère le varying fourni par le vertex shader
+      void main() {
+        gl_FragColor = vColor; // 5. On applique la couleur
+      }
+    `
+```
