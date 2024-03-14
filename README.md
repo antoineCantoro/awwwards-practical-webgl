@@ -17,7 +17,8 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 - [x] 2-3 - The WebGL coordinate system
 - [x] 2-4 - Adding more points with mouse clicks
 - [x] 2-5 - Drawing lines
-- [ ] 2-6 - Drawing a quad
+- [x] 2-6 - Drawing a triangle
+- [ ] 2-7 - Drawing a quad
 
 ### Part 3. WebGL Textures
 - [ ] 3-1 - Texture from image
