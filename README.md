@@ -12,7 +12,7 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 - [x] 1-2 - Brief history of WebGL and web graphics
 
 ### Part 2. WebGL drawing fundamentals
-- [ ] 1-1 - App boilerplate
+- [x] 1-1 - App boilerplate
 - [ ] 1-2 - Drawing a single point
 - [ ] 1-3 - The WebGL coordinate system
 - [ ] 1-4 - Adding more points with mouse clicks
