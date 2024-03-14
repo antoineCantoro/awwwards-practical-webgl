@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 - Drawing Lines</title>
+
+  <style>
+      
+    * { margin: 0; padding: 0; }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.5em;
+      margin-bottom: 1em;
+    }
+
+    #go-back {
+      position: fixed;
+      top: 1em;
+      left: 1em;
+    }
+
+    #canvas {
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+  </style>
+
+</head>
+<body>
+
+  <a id="go-back" href="/">Go Back</a>
+
+  <div id="container">
+    <h1>05 - Drawing Lines</h1>
+    <select name="line-mode" id="line-mode">
+      <option value="LINE_STRIP">gl.LINE_STRIP</option>
+      <option value="LINES">gl.LINES</option>
+      <option value="LINE_LOOP">gl.LINE_LOOP</option>
+    </select>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas')
+
+    const canvasSizes = {
+      width: 512,
+      height: 512
+    }
+
+    const mouse = {
+      x: 0,
+      y: 0
+    }
+
+    canvas.width = canvasSizes.width * window.devicePixelRatio
+    canvas.height = canvasSizes.height * window.devicePixelRatio
+    canvas.style.width = `${canvasSizes.width}px`
+    canvas.style.height = `${canvasSizes.height}px`
+
+    const gl = canvas.getContext('webgl')
+
+    const vertexShaderSource = `
+      attribute vec4 position;
+      attribute vec4 color;
+
+      varying vec4 vColor;
+
+      void main() {
+        vColor = color;
+        gl_Position = position;
+      }
+    `
+
+    const fragmentShaderSource = `
+      precision highp float;
+      varying vec4 vColor;
+
+      void main() {
+        gl_FragColor = vColor;
+      }
+    `
+
+
+    const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
+    const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)
+    const drawingProgram = createProgram(vertexShader, fragmentShader)
+
+    // Get line draw mode
+    let lineDrawMode = 'LINE_STRIP'
+
+    // Create an array for positions
+    const LINE_VERTICES_COUNT = 10
+    const LINE_DRAWING_WIDTH = 1
+    const LINE_DRAWING_HEIGHT = 0.5
+    const lineStepX = LINE_DRAWING_WIDTH / LINE_VERTICES_COUNT
+    let positions = new Float32Array(LINE_VERTICES_COUNT * 2)
+
+    for (let i = 0; i < LINE_VERTICES_COUNT; i++) {
+      positions[i * 2 + 0] = - LINE_DRAWING_WIDTH / 2 + lineStepX * i
+      positions[i * 2 + 1] = i % 2 === 0 ? -LINE_DRAWING_HEIGHT / 2 : LINE_DRAWING_HEIGHT / 2
+    }
+
+    // Create an array for colors
+    let colors = new Float32Array(LINE_VERTICES_COUNT * 3)
+
+    for (let i = 0; i < LINE_VERTICES_COUNT; i++) {
+      colors[i * 3 + 0] = Math.random()
+      colors[i * 3 + 1] = Math.random()
+      colors[i * 3 + 2] = Math.random()
+    }
+    
+    // Create webgl buffers for positions/colors/sizes
+    const vertexBuffer = gl.createBuffer()
+    const colorBuffer = gl.createBuffer()
+
+    // Look up the position/color/size attribute
+    const positionAttributeLocation = gl.getAttribLocation(drawingProgram, 'position') // return interger 
+    const colorAttributeLocation = gl.getAttribLocation(drawingProgram, 'color') // return interger 
+
+
+    // Add user interaction on mouse click
+    
+    canvas.addEventListener('click', (event) => {
+      onMouseClick(event)
+    })
+
+
+    const select = document.getElementById('line-mode')
+    select.addEventListener('change', (event) => {
+      lineDrawMode = event.target.value
+    })
+
+    function onMouseClick(event) {
+
+      // Generate coordonates
+      const globalPageCoordX = event.pageX
+      const globalPageCoordY = event.pageY
+
+      const canvasBounds =  canvas.getBoundingClientRect()
+      const canvasX = globalPageCoordX - canvasBounds.left
+      const canvasY = globalPageCoordY - canvasBounds.top
+
+      const webglX = (canvasX / canvasBounds.width) * 2 - 1
+      const webglY = 2 - (canvasY / canvasBounds.height) * 2 - 1
+
+      positions = new Float32Array([
+        ...positions, // existing point positions
+        webglX, 
+        webglY
+      ])
+
+      // Generate random color
+      colors = new Float32Array([
+        ...colors, // existing colors
+        Math.random(), // r
+        Math.random(), // g
+        Math.random()  // b
+      ])
+    }
+
+    // Rendering loop
+    requestAnimationFrame(renderFrame)
+
+    function renderFrame() {
+      requestAnimationFrame(renderFrame)
+
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
+      gl.clearColor(0.1, 0.1, 0.1, 1)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      {      
+        // Bind webglbuffer 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+        
+        // Link positions to vertexBuffer, supply array to webglbuffer
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
+        
+        // Enable the program on GPU
+        gl.enableVertexAttribArray(positionAttributeLocation)
+
+        // Tell to the GPU how to "unpack" the vertexBuffer WebGLBuffer into the position attribute
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+      }
+
+      // Same for colors
+      {
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW)
+        gl.enableVertexAttribArray(colorAttributeLocation)
+        gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0)
+      }
+
+      // Explicitly use my webgl program
+      gl.useProgram(drawingProgram) 
+
+      // Issue a draw command to the GPU
+      gl.drawArrays(gl[lineDrawMode], 0, positions.length / 2)
+    }
+
+    // WebGl Helpers modules
+
+    function createShader(type, source) { // return WebGLShader Object
+      const shader = gl.createShader(type) // vertex or fragment
+      gl.shaderSource(shader, source)
+      gl.compileShader(shader)
+
+      if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        return shader
+      } 
+      
+      console.error(`
+        Error while compiling shader:
+        ${gl.getShaderInfoLog(shader)}
+      `)
+      gl.deleteShader(shader)
+    }
+
+    function createProgram(vertexShader, fragmentShader) { // return WebGLProgram Object
+      const program = gl.createProgram()
+      gl.attachShader(program, vertexShader)
+      gl.attachShader(program, fragmentShader)
+      gl.linkProgram(program)
+
+      if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        return program
+      }
+
+      console.error(`
+        Error while linking program on the GPU:
+        ${gl.getShaderInfoLog(program)}
+      `)
+      gl.deleteProgram(program)
+    }
+
+  </script>
+</body>
+</html>
