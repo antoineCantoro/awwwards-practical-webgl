@@ -8,7 +8,7 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 ## Roadmap Progression
 
 ### Part 1. Intro
-- [ ] 1-1 - Welcome
+- [x] 1-1 - Welcome
 - [ ] 1-2 - Brief history of WebGL and web graphics
 
 ### Part 2. WebGL drawing fundamentals
