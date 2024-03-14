@@ -124,3 +124,12 @@ Nous avons besoin d'un "buffer" permettant de stocker nos positions et qui vont 
 ##### Vertices
 
 Corrdonnées d'un point (x, y par exmeple pour de la 2D) stocké dans un Float32Array.
+
+
+### 2-3 - WebGL Coordinate System
+
+En WebGL, le centre de l'écran est représenté par les coordonnées [0,0], Les valeurs allant de -1 à 1 pour les bords de l'écran.
+
+Dans ce cas, l'angle en haut à gauche de l'écran a pour coordonénes [-1,-1], tandis que l'angle en bas à droite a pour coordonnées [1,1].
+
+
