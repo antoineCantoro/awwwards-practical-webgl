@@ -9,7 +9,7 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 
 ### Part 1. Intro
 - [x] 1-1 - Welcome
-- [ ] 1-2 - Brief history of WebGL and web graphics
+- [x] 1-2 - Brief history of WebGL and web graphics
 
 ### Part 2. WebGL drawing fundamentals
 - [ ] 1-1 - App boilerplate
