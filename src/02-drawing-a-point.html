@@ -5,38 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>02 - Drawing a point</title>
-
-  <style>
-      
-    * { margin: 0; padding: 0; }
-
-    body {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: sans-serif;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 1.5em;
-      margin-bottom: 1em;
-    }
-
-    #go-back {
-      position: fixed;
-      top: 1em;
-      left: 1em;
-    }
-
-    #canvas {
-      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-  </style>
-
+  <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
@@ -87,13 +56,13 @@
       0.5, 0.5, // Point 2
       -0.5, -0.5, // Point 3
     ])
-
     
     // Create a webgl buffer
+    // It will be used to store the positions array and be will be send to the GPU latterly
     const vertexBuffer = gl.createBuffer()
 
-    // Look up the position attribute
-    const positionAttributeLocation = gl.getAttribLocation(drawingProgram, 'position') // return interger 
+    // Look up the "position" attribute variable location on the GPU
+    const positionAttributeLocationOnGPU = gl.getAttribLocation(drawingProgram, 'position') // return interger, >= 0 if found, 0 > if not found 
 
 
     // Rendering loop
@@ -105,18 +74,26 @@
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
       gl.clearColor(0.1, 0.1, 0.1, 1)
       gl.clear(gl.COLOR_BUFFER_BIT)
-
-      // Bind webglbuffer 
+ 
+      // Bind webglbuffer to special WebGL binding point (ARRAY_BUFFER)
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
       
+      // Supply the positions 32 array to WebGLBuffer
       // Link positions to vertexBuffer, supply array to webglbuffer
       gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
       
-      // Enable the program on GPU
-      gl.enableVertexAttribArray(positionAttributeLocation)
+      // "Explicitly" enable the program on GPU
+      gl.enableVertexAttribArray(positionAttributeLocationOnGPU)
 
       // Tell to the GPU how to "unpack" the vertexBuffer WebGLBuffer into the position attribute
-      gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+      gl.vertexAttribPointer(
+        positionAttributeLocationOnGPU, // Attribute location
+        2, // Number of elements per attribute (2 for x and y)
+        gl.FLOAT, // Type of elements
+        false, // Normalization
+        0, 
+        0
+      )
 
       // Explicitly use my webgl program
       gl.useProgram(drawingProgram) 
@@ -127,8 +104,8 @@
 
     // WebGl Helpers modules
 
-    function createShader(type, source) { // return WebGLShader Object
-      const shader = gl.createShader(type) // vertex or fragment
+    function createShader(type, source) { // return WebGLShader Object (vertex || fragment)
+      const shader = gl.createShader(type) // [vertex || fragment] 
       gl.shaderSource(shader, source)
       gl.compileShader(shader)
 
@@ -137,16 +114,16 @@
       } 
       
       console.error(`
-        Error while compiling shader:
+        Error while compiling shader on the GPU:
         ${gl.getShaderInfoLog(shader)}
       `)
       gl.deleteShader(shader)
     }
 
-    function createProgram(vertexShader, fragmentShader) { // return WebGLProgram Object
+    function createProgram(vertexShaderObject, fragmentShaderObject) { // return WebGLProgram Object
       const program = gl.createProgram()
-      gl.attachShader(program, vertexShader)
-      gl.attachShader(program, fragmentShader)
+      gl.attachShader(program, vertexShaderObject)
+      gl.attachShader(program, fragmentShaderObject)
       gl.linkProgram(program)
 
       if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
