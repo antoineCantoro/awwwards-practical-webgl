@@ -24,13 +24,10 @@
       height: 512
     }
 
-    const mouse = {
-      x: 0,
-      y: 0
-    }
+    const dpr = Math.min(window.devicePixelRatio, 2)
 
-    canvas.width = canvasSizes.width * window.devicePixelRatio
-    canvas.height = canvasSizes.height * window.devicePixelRatio
+    canvas.width = canvasSizes.width * dpr
+    canvas.height = canvasSizes.height * dpr
     canvas.style.width = `${canvasSizes.width}px`
     canvas.style.height = `${canvasSizes.height}px`
 
@@ -56,7 +53,6 @@
         gl_FragColor = vColor;
       }
     `
-
 
     const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
     const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)

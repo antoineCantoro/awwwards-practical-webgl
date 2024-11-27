@@ -24,10 +24,13 @@
       height: 512
     }
 
-    const dpr = Math.min(window.devicePixelRatio, 2)    
+    const mouse = {
+      x: 0,
+      y: 0
+    }
 
-    canvas.width = canvasSizes.width * dpr
-    canvas.height = canvasSizes.height * dpr
+    canvas.width = canvasSizes.width * window.devicePixelRatio
+    canvas.height = canvasSizes.height * window.devicePixelRatio
     canvas.style.width = `${canvasSizes.width}px`
     canvas.style.height = `${canvasSizes.height}px`
 
@@ -54,68 +57,65 @@
       }
     `
 
+
     const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
     const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)
     const drawingProgram = createProgram(vertexShader, fragmentShader)
 
 
     // Create an array for positions
-    const QUAD_WIDTH = 1
-    const QUAD_HEIGHT = 1
-    // const positions = new Float32Array([
-    //   // First triangle
-    //   -QUAD_WIDTH / 2, QUAD_WIDTH / 2,
-    //   -QUAD_HEIGHT / 2, -QUAD_HEIGHT / 2,
-    //   QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,
-    //   // Second triangle 
-    //   -QUAD_WIDTH / 2, QUAD_WIDTH / 2,
-    //   QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,
-    //   QUAD_WIDTH / 2, QUAD_HEIGHT / 2
-    // ])
+    const QUAD_WIDTH = 2
+    const QUAD_HEIGHT = 2
+    
     const positions = new Float32Array([
-      // First triangle
-      -QUAD_WIDTH / 2, -QUAD_HEIGHT / 2, // v0
-      QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,  // v1
-      QUAD_WIDTH / 2, QUAD_HEIGHT / 2,   // v2
-      -QUAD_WIDTH / 2, QUAD_HEIGHT / 2   // v3
+      // -QUAD_WIDTH / 2, QUAD_HEIGHT / 2,
+      // -QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,
+      // QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,
+
+      // -QUAD_WIDTH / 2, QUAD_HEIGHT / 2, 
+      // QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,
+      // QUAD_WIDTH / 2, QUAD_HEIGHT / 2
+
+      -QUAD_WIDTH / 2, -QUAD_HEIGHT / 2, // Point 1
+       QUAD_WIDTH / 2, -QUAD_HEIGHT / 2, // Point 2
+       QUAD_WIDTH / 2, QUAD_HEIGHT / 2,  // Point 3
+      -QUAD_WIDTH / 2, QUAD_HEIGHT / 2   // Point 4
     ])
 
     // Create an array for colors
-    // const colors = new Float32Array([
-    //   // First triangle  
-    //   1, 0, 0,
-    //   0, 1, 0,
-    //   0, 0.5, 0.5,
-    //   // Second triangle
-    //   1, 0, 0,
-    //   0, 0.5, 0.5,
-    //   0, 0, 1
-    // ])
     const colors = new Float32Array([
-      // First triangle  
-      1, 0, 0,
-      0, 1, 0,
-      0, 0, 1,
-      0, 0.5, 0.5,
+      // // First triangle
+      // 1, 0, 0,
+      // 0, 1, 0,
+      // 0, 0, 1,
+      // // Second triangle
+      // 1, 0, 0,
+      // 0, 0, 1,
+      // 0, 1, 0
+      1, 0, 0,    // Point 1
+      0, 1, 0,    // Point 2
+      0, 0, 1,    // Point 3
+      0, 0.5, 0.5 // Point 4
     ])
-
-    // Create an array holding indices that describe the two triangles connectivity
-    const indices = new Uint16Array([
-      1, 2, 0, // First triangle
-      0, 2, 3  // Second triangle
-    ])
-
-    // Create a webgl buffer for the two triangles positions
-    const indexBuffer = gl.createBuffer() 
     
     // Create webgl buffers for positions/colors/sizes
     const vertexBuffer = gl.createBuffer()
     const colorBuffer = gl.createBuffer()
 
+    // Create an array for indices to describe the vertices connectivity
+      const indices = new Uint16Array([
+        1, 2, 0, // First triangle
+        0, 2, 3  // Second triangle
+      ])
+
+
+    // Create a "special" buffer for indices
+    const indexBuffer = gl.createBuffer()
+
     // Look up the position/color/size attribute
     const positionAttributeLocation = gl.getAttribLocation(drawingProgram, 'position') // return interger 
     const colorAttributeLocation = gl.getAttribLocation(drawingProgram, 'color') // return interger 
-
+    
 
     // Rendering loop
     requestAnimationFrame(renderFrame)
@@ -149,13 +149,12 @@
         gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0)
       }
 
-      // Draw the quad by rasterizing the two triangles vertices
+      // Draw the quad
       {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-        // Supply indices unsigned int with 16 bits precision
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
       }
-
+      
       // Explicitly use my webgl program
       gl.useProgram(drawingProgram) 
 
