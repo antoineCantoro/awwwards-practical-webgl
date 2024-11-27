@@ -36,13 +36,13 @@
 
     const gl = canvas.getContext('webgl')
 
-    // const shaderLowPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.LOW_FLOAT)
-    // const shaderMediumPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.MEDIUM_FLOAT)
-    // const shaderHighPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
+    const shaderLowPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.LOW_FLOAT)
+    const shaderMediumPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.MEDIUM_FLOAT)
+    const shaderHighPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
 
-    // console.log('Low precision: ', shaderLowPrecision);
-    // console.log('Medium precision: ', shaderMediumPrecision);
-    // console.log('High precision: ', shaderHighPrecision);
+    console.log('Low precision: ', shaderLowPrecision);
+    console.log('Medium precision: ', shaderMediumPrecision);
+    console.log('High precision: ', shaderHighPrecision);
 
     const vertexShaderSource = `
       attribute vec4 position;
@@ -67,7 +67,6 @@
       }
     `
 
-
     const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
     const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)
     const drawingProgram = createProgram(vertexShader, fragmentShader)
@@ -86,7 +85,6 @@
     let sizes = new Float32Array([
       20.0
     ])
-
     
     // Create webgl buffers for positions/colors/sizes
     const vertexBuffer = gl.createBuffer()
@@ -112,7 +110,7 @@
       const globalPageCoordX = event.pageX
       const globalPageCoordY = event.pageY
 
-      const canvasBounds =  canvas.getBoundingClientRect()
+      const canvasBounds = canvas.getBoundingClientRect()
       const canvasX = globalPageCoordX - canvasBounds.left
       const canvasY = globalPageCoordY - canvasBounds.top
 
