@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>08 - Image as texture</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+  <a id="go-back" href="/">Go Back</a>
+
+  <div id="container">
+    <h1>08 - Image as texture</h1>
+    <div id="controls">
+      <label for="scale">scale</label>
+      <input type="range" id="scale" min="-10" max="10" step="0.1" value="0">
+      <label for="wraps">wraps</label>
+      <select name="wraps" id="wraps">
+        <option value="REPEAT">gl.REPEAT</option>
+        <option value="CLAMP_TO_EDGE">gl.CLAMP_TO_EDGE</option>
+        <option value="MIRRORED_REPEAT">gl.MIRRORED_REPEAT</option>
+      </select>
+      <label for="wrapt">wrap-t</label>
+      <select name="wrapt" id="wrapt">
+        <option value="REPEAT">gl.REPEAT</option>
+        <option value="CLAMP_TO_EDGE">gl.CLAMP_TO_EDGE</option>
+        <option value="MIRRORED_REPEAT">gl.MIRRORED_REPEAT</option>
+      </select>
+      <label for="minfilter">minfilter</label>
+      <select name="minfilter" id="minfilter">
+        <option value="LINEAR">gl.LINEAR</option>
+        <option value="NEAREST">gl.NEAREST</option>
+      </select>
+      <label for="magfilter">magfilter</label>
+      <select name="magfilter" id="magfilter">
+        <option value="LINEAR">gl.LINEAR</option>
+        <option value="NEAREST">gl.NEAREST</option>
+      </select>
+    </div>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas')
+
+    const canvasSizes = {
+      width: 512,
+      height: 512
+    }
+
+    const dpr = Math.min(window.devicePixelRatio, 2)    
+
+    canvas.width = canvasSizes.width * dpr
+    canvas.height = canvasSizes.height * dpr
+    canvas.style.width = `${canvasSizes.width}px`
+    canvas.style.height = `${canvasSizes.height}px`
+
+    const gl = canvas.getContext('webgl')
+
+    const vertexShaderSource = `
+      attribute vec4 position;
+      attribute vec2 uv;
+
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = position;
+      }
+    `
+
+    const fragmentShaderSource = `
+      precision highp float;
+      uniform sampler2D myTexture;
+      varying vec2 vUv;
+
+      void main() {
+        vec2 augmentedUVs = vUv;
+        vec4 textureColor = texture2D(myTexture, augmentedUVs);
+        gl_FragColor = textureColor;
+      }
+    `
+
+    const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
+    const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)
+    const drawingProgram = createProgram(vertexShader, fragmentShader)
+
+
+    // Create an array for positions
+    const QUAD_WIDTH = 2
+    const QUAD_HEIGHT = 2
+
+    const positions = new Float32Array([
+      // First triangle
+      -QUAD_WIDTH / 2, -QUAD_HEIGHT / 2, // v0
+      QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,  // v1
+      QUAD_WIDTH / 2, QUAD_HEIGHT / 2,   // v2
+      -QUAD_WIDTH / 2, QUAD_HEIGHT / 2   // v3
+    ])
+
+    // Create an array for colors
+    const colors = new Float32Array([
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1,
+      0, 0.5, 0.5,
+    ])
+    
+
+    // Create an array holding indices that describe the two triangles connectivity
+    const indices = new Uint16Array([
+      1, 2, 0, // First triangle
+      0, 2, 3  // Second triangle
+    ])
+
+    // Create a webgl buffer for the two triangles positions
+    const indexBuffer = gl.createBuffer() 
+    
+    // Create webgl buffers for positions/colors/sizes
+    const vertexBuffer = gl.createBuffer()
+    const uvBuffer = gl.createBuffer()
+    // Create an array for uv coordinates with 32 bits precision
+    const uvs = new Float32Array([
+      0, 0,
+      1, 0,
+      1, 1,
+      0, 1
+    ])
+
+    // Look up the position/color/size attribute
+    const positionAttributeLocation = gl.getAttribLocation(drawingProgram, 'position') // return interger 
+    const uvAttributeLocation = gl.getAttribLocation(drawingProgram, 'uv') // return interger 
+
+    // Create a WebGLTexture
+    const texture = gl.createTexture()
+
+    // Create canvas texture
+    const canvasTexture = document.createElement('canvas')
+    canvasTexture.width = 512
+    canvasTexture.height = 512
+    const ctx = canvasTexture.getContext('2d')
+    const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+    gradient.addColorStop(0, "#774898");
+    gradient.addColorStop(1, "#774898");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = '#EFDE26'
+    ctx.textAlign = 'center'
+    ctx.font = 'bold 64px tr3a'
+    const offset = 0
+    ctx.fillText('TROA', canvasTexture.width / 2, canvasTexture.height / 2 - (22 + 20))
+    ctx.fillText('CLUB', canvasTexture.width / 2, canvasTexture.height / 2 + (22 + 40))
+    ctx.font = 'bold italic 64px tr3a'
+    ctx.fillText('RUNNING', canvasTexture.width / 2, canvasTexture.height / 2 + 10)
+    ctx.font = 'bold 20px tr3a'
+    ctx.fillText('MTP', canvasTexture.width / 2, canvasTexture.height / 2  + (64 + 40))
+
+    // Set the texture to the textureLocation gl.TEXTURE0
+    gl.useProgram(drawingProgram)
+    const textureLocation = gl.getUniformLocation(drawingProgram, 'myTexture')
+    gl.uniform1i(textureLocation, 0)
+
+
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+
+    // 
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT) 
+
+    //
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+    // Supply image to the newly created webGL texture
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, canvasTexture)
+
+    // Generate mipmap
+    gl.generateMipmap(gl.TEXTURE_2D)
+    
+    gl.bindTexture(gl.TEXTURE_2D, null)
+
+
+    // Rendering loop
+    requestAnimationFrame(renderFrame)
+
+    function renderFrame() {
+      requestAnimationFrame(renderFrame)
+
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
+      gl.clearColor(0.1, 0.1, 0.1, 1)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      {      
+        // Bind webglbuffer 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+        
+        // Link positions to vertexBuffer, supply array to webglbuffer
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
+        
+        // Enable the program on GPU
+        gl.enableVertexAttribArray(positionAttributeLocation)
+
+        // Tell to the GPU how to "unpack" the vertexBuffer WebGLBuffer into the position attribute
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+      }
+
+      // Same for uv buffer (texture colors)
+      {
+        gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.DYNAMIC_DRAW)
+        gl.enableVertexAttribArray(uvAttributeLocation)
+        gl.vertexAttribPointer(uvAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+      }
+
+      // Draw the quad by rasterizing the two triangles vertices
+      {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+        // Supply indices unsigned int with 16 bits precision
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+      }
+
+      // Explicitly use my webgl program
+      gl.useProgram(drawingProgram) 
+
+      // Activate the texture to the textureLocation gl.TEXTURE0
+      gl.activeTexture(gl.TEXTURE0, texture)
+      // Bind the texture to the textureLocation
+      gl.bindTexture(gl.TEXTURE_2D, texture)
+
+      // Issue a draw command to the GPU
+      // gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2)
+      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
+    }
+
+    // WebGl Helpers modules
+
+    function createShader(type, source) { // return WebGLShader Object
+      const shader = gl.createShader(type) // vertex or fragment
+      gl.shaderSource(shader, source)
+      gl.compileShader(shader)
+
+      if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        return shader
+      } 
+      
+      console.error(`
+        Error while compiling shader:
+        ${gl.getShaderInfoLog(shader)}
+      `)
+      gl.deleteShader(shader)
+    }
+
+    function createProgram(vertexShader, fragmentShader) { // return WebGLProgram Object
+      const program = gl.createProgram()
+      gl.attachShader(program, vertexShader)
+      gl.attachShader(program, fragmentShader)
+      gl.linkProgram(program)
+
+      if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        return program
+      }
+
+      console.error(`
+        Error while linking program on the GPU:
+        ${gl.getShaderInfoLog(program)}
+      `)
+      gl.deleteProgram(program)
+    }
+
+  </script>
+</body>
+</html>
