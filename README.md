@@ -29,7 +29,7 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 - [x] 4-1 - Debugging WebGL Applications
 
 ### Part 5. Transformations
-- [ ] 5-1 - Translation
+- [x] 5-1 - Translation
 - [ ] 5-2 - Translation with matrix
 - [ ] 5-3 - Scaling with matrix
 - [ ] 5-4 - Rotation with matrix
