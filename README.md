@@ -30,7 +30,7 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 
 ### Part 5. Transformations
 - [x] 5-1 - Translation
-- [ ] 5-2 - Translation with matrix
+- [x] 5-2 - Translation with matrix
 - [ ] 5-3 - Scaling with matrix
 - [ ] 5-4 - Rotation with matrix
 - [ ] 5-5 - Combining matrices
