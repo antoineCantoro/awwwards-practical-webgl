@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>09 - Video as texture</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+  <a id="go-back" href="/">Go Back</a>
+
+  <div id="container">
+    <h1>09 - Video as texture</h1>
+    <fieldset><label for="texture-background-size-mode">Background cover ?</label>
+      <input type="checkbox" name="texture-background-size-mode" id="texture-background-size-mode" checked></fieldset>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas')
+
+    const canvasSizes = {
+      width: 512,
+      height: 512
+    }
+
+    const coverCheckbox = document.getElementById('texture-background-size-mode')
+    coverCheckbox.addEventListener('change', (event) => {
+      textureBackgroundSizeMode = event.target.checked ? 0 : 1
+    })
+    let textureBackgroundSizeMode = 0
+
+    let textureWrapSMode = 'CLAMP_TO_EDGE'
+    let textureWrapTMode = 'CLAMP_TO_EDGE'
+    let textureMinFilter = 'LINEAR'
+    let textureMagFilter = 'LINEAR'
+    let textureScale = 1
+
+    const dpr = Math.min(window.devicePixelRatio, 2)    
+
+    canvas.width = canvasSizes.width * dpr
+    canvas.height = canvasSizes.height * dpr
+    canvas.style.width = `${canvasSizes.width}px`
+    canvas.style.height = `${canvasSizes.height}px`
+
+    const gl = canvas.getContext('webgl')
+
+    const vertexShaderSource = `
+      attribute vec4 position;
+      attribute vec2 uv;
+
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = position;
+      }
+    `
+
+    const fragmentShaderSource = `
+      precision highp float;
+
+      uniform float textureScale;
+      uniform sampler2D myTexture;
+      uniform vec2 uCanvasSize;
+      uniform vec2 uVideoSize;
+      uniform int uBackgroundSizeMode;
+
+      varying vec2 vUv;
+
+      void main() {
+
+        vec2 s = uCanvasSize;
+        vec2 i = uVideoSize;
+        float rs = s.x / s.y;
+        float ri = i.x / i.y;
+        vec2 new = rs < ri ? vec2(i.x * s.y / i.y, s.y) : vec2(s.x, i.y * s.x / i.x);
+        vec2 offset = (rs < ri ? vec2((new.x - s.x) / 2.0, 0.0) : vec2(0.0, (new.y - s.y) / 2.0)) / new;
+        vec2 uv = uBackgroundSizeMode == 0 ? vUv : (vUv * s / new + offset);
+        // vec2 uv = (vUv * s / new + offset);
+
+        vec2 scaledUVs = uv * textureScale;
+
+        vec4 textureColor = texture2D(myTexture, scaledUVs);
+        gl_FragColor = textureColor;
+      }
+    `
+
+    const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
+    const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)
+    const drawingProgram = createProgram(vertexShader, fragmentShader)
+
+
+    // Create an array for positions
+    const QUAD_WIDTH = 2
+    const QUAD_HEIGHT = 2
+
+    const positions = new Float32Array([
+      // First triangle
+      -QUAD_WIDTH / 2, -QUAD_HEIGHT / 2, // v0
+      QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,  // v1
+      QUAD_WIDTH / 2, QUAD_HEIGHT / 2,   // v2
+      -QUAD_WIDTH / 2, QUAD_HEIGHT / 2   // v3
+    ])
+
+    // Create an array for colors
+    const colors = new Float32Array([
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1,
+      0, 0.5, 0.5,
+    ])
+    
+
+    // Create an array holding indices that describe the two triangles connectivity
+    const indices = new Uint16Array([
+      1, 2, 0, // First triangle
+      0, 2, 3  // Second triangle
+    ])
+
+    // Create a webgl buffer for the two triangles positions
+    const indexBuffer = gl.createBuffer() 
+    
+    // Create webgl buffers for positions/colors/sizes
+    const vertexBuffer = gl.createBuffer()
+    const uvBuffer = gl.createBuffer()
+    // Create an array for uv coordinates with 32 bits precision
+    const uvs = new Float32Array([
+      0, 0,
+      1, 0,
+      1, 1,
+      0, 1
+    ])
+
+    // Look up the position/color/size attribute
+    const positionAttributeLocation = gl.getAttribLocation(drawingProgram, 'position') // return interger 
+    const uvAttributeLocation = gl.getAttribLocation(drawingProgram, 'uv') // return interger 
+
+    // Look up uniforms variables on the GPU
+    gl.useProgram(drawingProgram)
+    const textureLocation = gl.getUniformLocation(drawingProgram, 'myTexture')
+    const textureScaleLocation = gl.getUniformLocation(drawingProgram, 'textureScale')
+    const canvasSizeLocation = gl.getUniformLocation(drawingProgram, 'uCanvasSize')
+    const videoSizeLocation = gl.getUniformLocation(drawingProgram, 'uVideoSize')
+    const backgroundSizeModeLocation = gl.getUniformLocation(drawingProgram, 'uBackgroundSizeMode')
+
+    // Create a video WebGLTexture
+    const texture = gl.createTexture()
+    const video = document.createElement('video')
+    video.src = 'assets/big-buck-bunny-sample-video.mp4'
+    video.loop = true
+    video.muted = true
+    video.autoplay = true
+    video.playsInline = true
+
+    // browser compatibility
+    video.setAttribute('loop', true)
+    video.setAttribute('muted', true)
+    video.setAttribute('autoplay', true)
+    video.setAttribute('playsinline', true)
+
+    gl.useProgram(drawingProgram)
+    gl.uniform1i(textureLocation, 0)
+    gl.uniform1f(textureScaleLocation, textureScale)
+    gl.uniform2f(canvasSizeLocation, canvasSizes.width, canvasSizes.height)
+
+
+
+    video.addEventListener('canplay', () => {
+      video.play()
+      gl.bindTexture(gl.TEXTURE_2D, texture)
+
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+
+      // 
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[textureWrapSMode])
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[textureWrapTMode]) 
+      //
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[textureMinFilter])
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[textureMagFilter])
+
+      // Supply video sizes
+      gl.uniform2f(videoSizeLocation, video.videoWidth, video.videoHeight)
+
+
+
+      // Supply image to the newly created webGL texture
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video)
+
+      // Generate mipmap
+      // gl.generateMipmap(gl.TEXTURE_2D)
+      
+      gl.bindTexture(gl.TEXTURE_2D, null)
+    })
+
+
+    // Rendering loop
+    requestAnimationFrame(renderFrame)
+
+    function renderFrame() {
+      requestAnimationFrame(renderFrame)
+
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
+      gl.clearColor(0.1, 0.1, 0.1, 1)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      // Mettre à jour la texture vidéo
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
+
+      {      
+        // Bind webglbuffer 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+        
+        // Link positions to vertexBuffer, supply array to webglbuffer
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
+        
+        // Enable the program on GPU
+        gl.enableVertexAttribArray(positionAttributeLocation)
+
+        // Tell to the GPU how to "unpack" the vertexBuffer WebGLBuffer into the position attribute
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+      }
+
+      // Same for uv buffer (texture colors)
+      {
+        gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.DYNAMIC_DRAW)
+        gl.enableVertexAttribArray(uvAttributeLocation)
+        gl.vertexAttribPointer(uvAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+      }
+
+      // Draw the quad by rasterizing the two triangles vertices
+      {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+        // Supply indices unsigned int with 16 bits precision
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+      }
+
+      // Explicitly use my webgl program
+      gl.useProgram(drawingProgram) 
+
+      // Activate the texture to the textureLocation gl.TEXTURE0
+      gl.activeTexture(gl.TEXTURE0, texture)
+      // Bind the texture to the textureLocation
+      gl.bindTexture(gl.TEXTURE_2D, texture)
+
+
+      gl.uniform1i(backgroundSizeModeLocation, textureBackgroundSizeMode)
+
+      // Issue a draw command to the GPU
+      // gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2)
+      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
+    }
+
+    // WebGl Helpers modules
+
+    function createShader(type, source) { // return WebGLShader Object
+      const shader = gl.createShader(type) // vertex or fragment
+      gl.shaderSource(shader, source)
+      gl.compileShader(shader)
+
+      if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        return shader
+      } 
+      
+      console.error(`
+        Error while compiling shader:
+        ${gl.getShaderInfoLog(shader)}
+      `)
+      gl.deleteShader(shader)
+    }
+
+    function createProgram(vertexShader, fragmentShader) { // return WebGLProgram Object
+      const program = gl.createProgram()
+      gl.attachShader(program, vertexShader)
+      gl.attachShader(program, fragmentShader)
+      gl.linkProgram(program)
+
+      if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        return program
+      }
+
+      console.error(`
+        Error while linking program on the GPU:
+        ${gl.getShaderInfoLog(program)}
+      `)
+      gl.deleteProgram(program)
+    }
+
+  </script>
+</body>
+</html>

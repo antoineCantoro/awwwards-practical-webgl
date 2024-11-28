@@ -5,38 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>04 - Adding points on mouse click</title>
-
-  <style>
-      
-    * { margin: 0; padding: 0; }
-
-    body {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: sans-serif;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 1.5em;
-      margin-bottom: 1em;
-    }
-
-    #go-back {
-      position: fixed;
-      top: 1em;
-      left: 1em;
-    }
-
-    #canvas {
-      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-  </style>
-
+  <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
@@ -67,13 +36,13 @@
 
     const gl = canvas.getContext('webgl')
 
-    // const shaderLowPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.LOW_FLOAT)
-    // const shaderMediumPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.MEDIUM_FLOAT)
-    // const shaderHighPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
+    const shaderLowPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.LOW_FLOAT)
+    const shaderMediumPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.MEDIUM_FLOAT)
+    const shaderHighPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
 
-    // console.log('Low precision: ', shaderLowPrecision);
-    // console.log('Medium precision: ', shaderMediumPrecision);
-    // console.log('High precision: ', shaderHighPrecision);
+    console.log('Low precision: ', shaderLowPrecision);
+    console.log('Medium precision: ', shaderMediumPrecision);
+    console.log('High precision: ', shaderHighPrecision);
 
     const vertexShaderSource = `
       attribute vec4 position;
@@ -98,7 +67,6 @@
       }
     `
 
-
     const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
     const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)
     const drawingProgram = createProgram(vertexShader, fragmentShader)
@@ -117,7 +85,6 @@
     let sizes = new Float32Array([
       20.0
     ])
-
     
     // Create webgl buffers for positions/colors/sizes
     const vertexBuffer = gl.createBuffer()
@@ -143,7 +110,7 @@
       const globalPageCoordX = event.pageX
       const globalPageCoordY = event.pageY
 
-      const canvasBounds =  canvas.getBoundingClientRect()
+      const canvasBounds = canvas.getBoundingClientRect()
       const canvasX = globalPageCoordX - canvasBounds.left
       const canvasY = globalPageCoordY - canvasBounds.top
 

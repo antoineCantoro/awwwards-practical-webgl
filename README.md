@@ -21,9 +21,9 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 - [x] 2-7 - Drawing a quad
 
 ### Part 3. WebGL Textures
-- [ ] 3-1 - Texture from image
-- [ ] 3-2 - Texture from video
-- [ ] 3-3 - Texture from HTML5 canvas
+- [x] 3-1 - Texture from image
+- [x] 3-2 - Texture from video
+- [x] 3-3 - Texture from HTML5 canvas
 
 ### Part 4. Debugging WebGL Applications
 - [ ] 4-1 - Debugging WebGL Applications

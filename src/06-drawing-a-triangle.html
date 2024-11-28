@@ -5,38 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>06 - Drawing a triangle</title>
-
-  <style>
-      
-    * { margin: 0; padding: 0; }
-
-    body {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: sans-serif;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 1.5em;
-      margin-bottom: 1em;
-    }
-
-    #go-back {
-      position: fixed;
-      top: 1em;
-      left: 1em;
-    }
-
-    #canvas {
-      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-  </style>
-
+  <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
@@ -55,13 +24,10 @@
       height: 512
     }
 
-    const mouse = {
-      x: 0,
-      y: 0
-    }
+    const dpr = Math.min(window.devicePixelRatio, 2)
 
-    canvas.width = canvasSizes.width * window.devicePixelRatio
-    canvas.height = canvasSizes.height * window.devicePixelRatio
+    canvas.width = canvasSizes.width * dpr
+    canvas.height = canvasSizes.height * dpr
     canvas.style.width = `${canvasSizes.width}px`
     canvas.style.height = `${canvasSizes.height}px`
 
@@ -87,7 +53,6 @@
         gl_FragColor = vColor;
       }
     `
-
 
     const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
     const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)

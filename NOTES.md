@@ -4,12 +4,13 @@
 
 ### 1-2 - Brief history of WebGL and web graphics
 
-WebGL, web api permettant de faire des visuels complexes basé sur openGl, utilisé dans et par de nombreux logiciels tels que blender, photoshop ...
-OpenGL permet de standardiser le développement 
+WebGL est une web API (Application Programming Interface) permettant de faire des visuels complexes basé sur OpenGL. utilisé dans et par de nombreux logiciels tels que blender, photoshop ...
+OpenGL(pour Open Graphic Library) est une API graphique qui propose des fonctions graphiques utilisable âr les développeur pour tracer des élements sur un écran.
 
-La version 1 de webGL (2011) est basée sur la verson OpenGL ES 2.0 (2007), conçu initialement pour les téléphones mobiles.
+OpenGL a été crée en 1992 par Silicon Graphic, une société américaine qui construisait des workstations dédiées aux domaines de l'infographie et de la 3D. De nos jours la sociéné n'existe plus mais le projet à été réccupéré par le consortium industriel "Khronos Group" en 2000. OpenGL est utilisé parce qu'il permet de standardiser le développement d'applications. Il existe plusieurs versions d'OpenGL, dont une appellée "OpenGL ES", sortie en 2003 et qui est une version allégée et qui a pour but de tourner sur des terminaux peu puissants et ayant peu de mémoire vives.
 
-WebGl n'est pas une librairie, c'est un "rasterisation engine"
+La version 1.0 de WebGL (2011) est basée sur la version OpenGL ES 2.0 (2007), conçu initialement pour les téléphones mobiles. 
+<!-- WebGL n'est pas une librairie, c'est un "rasterisation engine" -->
 
 ### Part 2. WebGL drawing fundamentals
 
@@ -41,7 +42,7 @@ Le travail du GPU peut être représenté par deux programmes appellés "Vertex 
 
 Le premier a être exécuté par le GPU est le Vertex Shader, qui a pour but de tranformer les coordonnées que le javascript va fournir en coordonnées qui vont être rendue dans le canvas webgl. 
 
-Les coordonnées d'origines sont appellée "World Coordinates", tandis que les coordonnées finales sont appellées "Clip Coordinates". Le fai est que même si notre scene est en 2d, le rendu final à l'écran est une image en 2D.
+Les coordonnées d'origines sont appellée "World Coordinates", tandis que les coordonnées finales sont appellées "Clip Coordinates". Le fait est que même si notre scene est en 3d, le rendu final à l'écran est une image en 2D.
 Toutes les transformations de positions (rotation, position, ...) vont être réalisées durant cette étape Vertex.
 
 #### Fragment Shader (a.k.a. pixel shader)
@@ -49,7 +50,7 @@ Le deuxième programme qui va être exécuté est le "Fragment" shader. Une fois
 
 #### Vertices
 
-Les vertticies sont basiquement des points qui vont êtres fourni par le javascript au vertex shader. Pour générer un triangle par exemple, il sera nécessaire de fournir 3 verticices au programme.
+Les verticies sont basiquement des points qui vont êtres fourni par le javascript au vertex shader. Pour générer un triangle par exemple, il sera nécessaire de fournir 3 verticices au programme.
 
 #### Rasterizer
 ...
@@ -114,7 +115,7 @@ Du couté du fragment, le shader va également exécuter la fonction "main" et d
 
 ##### Float32Array()
 
-Pour stocker les positions, il est nécesaire de les stocker dans un tableau. Cependant on ne peut pas utiliser un tableau "classique", il est nécessaure de créer un ***new Float32Array()***, un tableau n'acceptant que les nombres (contrairement à un array classique qui peut stocker à la fois string, array, object, number, ...).
+Pour stocker les positions, il est nécessaire de les stocker dans un tableau. Cependant on ne peut pas utiliser un tableau "classique", il est nécessaure de créer un ***new Float32Array()***, un tableau n'acceptant que les nombres (contrairement à un array classique qui peut stocker à la fois string, array, object, number, ...).
 Il existe d'autres types de tableaux (ex: Float64Array, Int8Array) mais c'est majoritairement le Float32 qui sera utilisé. Cela peut servir pour stocker des positions mais égelment des valeurs de couleur par exemple.
 
 ##### WebGl Buffer
