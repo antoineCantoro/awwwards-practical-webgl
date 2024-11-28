@@ -33,7 +33,7 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 - [x] 5-2 - Translation with matrix
 - [x] 5-3 - Scaling with matrix
 - [x] 5-4 - Rotation with matrix
-- [ ] 5-5 - Combining matrices
+- [x] 5-5 - Combining matrices
 
 ### Part 6. Building a WebGL slider
 - [ ] 6-1 - Building a WebGL slider
