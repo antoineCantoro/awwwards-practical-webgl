@@ -138,24 +138,24 @@
 
     // Create canvas texture
     const canvasTexture = document.createElement('canvas')
-    canvasTexture.width = 512
-    canvasTexture.height = 512
+    canvasTexture.width = 512 * dpr
+    canvasTexture.height = 512 * dpr
     const ctx = canvasTexture.getContext('2d')
-    const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+    const gradient = ctx.createLinearGradient(0, 0, 512 * dpr, 512 * dpr);
     gradient.addColorStop(0, "#774898");
     gradient.addColorStop(1, "#774898");
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillRect(0, 0, 512 * dpr, 512 * dpr);
     ctx.fillStyle = '#EFDE26'
     ctx.textAlign = 'center'
-    ctx.font = 'bold 64px tr3a'
+    ctx.font = 'bold 128px tr3a'
     const offset = 0
-    ctx.fillText('TROA', canvasTexture.width / 2, canvasTexture.height / 2 - (22 + 20))
-    ctx.fillText('CLUB', canvasTexture.width / 2, canvasTexture.height / 2 + (22 + 40))
-    ctx.font = 'bold italic 64px tr3a'
-    ctx.fillText('RUNNING', canvasTexture.width / 2, canvasTexture.height / 2 + 10)
-    ctx.font = 'bold 20px tr3a'
-    ctx.fillText('MTP', canvasTexture.width / 2, canvasTexture.height / 2  + (64 + 40))
+    ctx.fillText('TROA', canvasTexture.width / 2, canvasTexture.height / 2 - (22 + 20) * dpr)
+    ctx.fillText('CLUB', canvasTexture.width / 2, canvasTexture.height / 2 + (22 + 40) * dpr)
+    ctx.font = 'bold italic 128px tr3a'
+    ctx.fillText('RUNNING', canvasTexture.width / 2, canvasTexture.height / 2 + 10 * dpr)
+    ctx.font = 'bold 40px tr3a'
+    ctx.fillText('MTP', canvasTexture.width / 2, canvasTexture.height / 2  + (64 + 40) * dpr)
 
     // Set the texture to the textureLocation gl.TEXTURE0
     gl.useProgram(drawingProgram)

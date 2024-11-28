@@ -26,7 +26,7 @@ https://www.awwwards.com/academy/course/practical-webgl-from-scratch-for-fronten
 - [x] 3-3 - Texture from HTML5 canvas
 
 ### Part 4. Debugging WebGL Applications
-- [ ] 4-1 - Debugging WebGL Applications
+- [x] 4-1 - Debugging WebGL Applications
 
 ### Part 5. Transformations
 - [ ] 5-1 - Translation
