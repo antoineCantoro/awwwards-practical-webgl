@@ -31,3 +31,23 @@ h1 {
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+.sliderWrapper {
+  position: relative;
+}
+
+.button {
+  position: absolute;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  margin-top: -24px;
+}
+
+#prevButton {
+  left: 1em;
+}
+
+#nextButton {
+  right: 1em;
+}

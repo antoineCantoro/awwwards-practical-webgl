@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>16 - Building webgl slider</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popmotion/11.0.5/popmotion.js" integrity="sha512-mOqQj+K+NFl+7FImX7ZunglSrZUvRqyKm4ZeHD1D0N/aJmqrSsCZ0zwFfYTAdZeNvCT+1PbT6EvxpYUgjiXw/A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+
+  <a id="go-back" href="/">Go Back</a>
+
+  <div id="container">
+    <h1>16 - Building webgl slider</h1>
+    <div class="sliderWrapper">
+      <canvas id="canvas"></canvas>
+      <button id="prevButton" class="button">&#8592;</button>
+      <button id="nextButton" class="button">&#8594;</button>
+    </div>
+  </div>
+
+  <script>
+    let previousSlideIndex = 6
+    let activeSlideIndex = 0
+    let slideMixFactor = 0
+
+    const navigationElements = document.querySelectorAll('.button')
+
+    navigationElements.forEach(element => {
+      element.addEventListener('click', () => {
+        const elementId = element.getAttribute('id')
+        previousSlideIndex = activeSlideIndex
+
+        if (elementId === 'prevButton') {
+          activeSlideIndex = activeSlideIndex === 0 ? 6 : activeSlideIndex - 1 
+        } else {
+          activeSlideIndex = activeSlideIndex === 6 ? 0 : activeSlideIndex + 1
+        }
+
+        popmotion.animate({
+          from: 0,
+          to: 1,
+          onUpdate: latest => slideMixFactor = latest,
+        })
+      })      
+    })
+
+    const sliderImages = new Array(7).fill(null).map((_, index) => `assets/webgl-slider/slide-${index + 1}-512x512.webp`)    
+
+    const canvas = document.getElementById('canvas')
+
+    const canvasSizes = {
+      width: 512,
+      height: 512
+    }
+
+    const dpr = Math.min(window.devicePixelRatio, 2)    
+
+    canvas.width = canvasSizes.width * dpr
+    canvas.height = canvasSizes.height * dpr
+    canvas.style.width = `${canvasSizes.width}px`
+    canvas.style.height = `${canvasSizes.height}px`
+
+    const gl = canvas.getContext('webgl')
+
+    const vertexShaderSource = `
+      attribute vec4 position;
+      attribute vec2 uv;
+
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = position;
+      }
+    `
+
+    const fragmentShaderSource = `
+      precision highp float;
+      
+      const int NUMBER_OF_TEXTURES = 7;
+
+      uniform sampler2D textures[NUMBER_OF_TEXTURES];
+      uniform int activeSlideIndex;
+      uniform int previousSlideIndex;
+      uniform float slideMixFactor;
+
+      varying vec2 vUv;
+
+
+      vec4 sampleFromTextureAtIndex(sampler2D textures[NUMBER_OF_TEXTURES], int textureIndex, vec2 uv) {
+        vec4 outputColor = vec4(0.0);
+
+        for (int i = 0; i < NUMBER_OF_TEXTURES; i++) {
+          vec4 textureColorAtIndex = texture2D(textures[i], uv);
+          if (i == textureIndex) {
+            outputColor = textureColorAtIndex;
+          }
+        }
+
+        return outputColor;
+      }
+
+      void main() {
+        vec4 previousTextureColor = sampleFromTextureAtIndex(textures, previousSlideIndex, vUv);
+        vec4 activeTextureColor = sampleFromTextureAtIndex(textures, activeSlideIndex, vUv);
+
+        gl_FragColor = mix(previousTextureColor, activeTextureColor, slideMixFactor);
+      }
+    `
+
+    const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource)
+    const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource)
+    const drawingProgram = createProgram(vertexShader, fragmentShader)
+
+
+    // Create an array for positions
+    const QUAD_WIDTH = 2
+    const QUAD_HEIGHT = 2
+
+    const positions = new Float32Array([
+      // First triangle
+      -QUAD_WIDTH / 2, -QUAD_HEIGHT / 2, // v0
+      QUAD_WIDTH / 2, -QUAD_HEIGHT / 2,  // v1
+      QUAD_WIDTH / 2, QUAD_HEIGHT / 2,   // v2
+      -QUAD_WIDTH / 2, QUAD_HEIGHT / 2   // v3
+    ])
+
+    // Create an array for colors
+    const colors = new Float32Array([
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1,
+      0, 0.5, 0.5,
+    ])
+    
+
+    // Create an array holding indices that describe the two triangles connectivity
+    const indices = new Uint16Array([
+      1, 2, 0, // First triangle
+      0, 2, 3  // Second triangle
+    ])
+
+    // Create a webgl buffer for the two triangles positions
+    const indexBuffer = gl.createBuffer() 
+    
+    // Create webgl buffers for positions/colors/sizes
+    const vertexBuffer = gl.createBuffer()
+    const uvBuffer = gl.createBuffer()
+    // Create an array for uv coordinates with 32 bits precision
+    const uvs = new Float32Array([
+      0, 0,
+      1, 0,
+      1, 1,
+      0, 1
+    ])
+
+    // Look up the position/color/size attribute
+    const positionAttributeLocation = gl.getAttribLocation(drawingProgram, 'position') // return interger 
+    const uvAttributeLocation = gl.getAttribLocation(drawingProgram, 'uv') // return interger 
+
+    // Look up the textures uniform
+    const texturesUniform = gl.getUniformLocation(drawingProgram, 'textures')
+    const previouSliderIndexUniform = gl.getUniformLocation(drawingProgram, 'previouSlideIndex')
+    const activeSliderIndexUniform = gl.getUniformLocation(drawingProgram, 'activeSlideIndex')
+    const slideMixFactorUniform = gl.getUniformLocation(drawingProgram, 'slideMixFactor')
+
+    // Create a WebGLTexture
+    const textures = []
+    // const texture = gl.createTexture()
+
+    Promise.all(sliderImages.map(loadimage))
+      .then(images => {
+        console.log(images)
+        images.forEach(image => {
+          const texture = createWebGLTexture(image)
+          textures.push(texture)
+        })
+      })
+
+
+    function createWebGLTexture(image) {
+      const texture = gl.createTexture()
+      gl.bindTexture(gl.TEXTURE_2D, texture)
+
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+
+      // 
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT) 
+
+      //
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+      // Supply image to the newly created webGL texture
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image)
+
+      // Generate mipmap
+      gl.generateMipmap(gl.TEXTURE_2D)
+      
+      gl.bindTexture(gl.TEXTURE_2D, null)
+
+      return texture
+    }
+
+
+    // Rendering loop
+    requestAnimationFrame(renderFrame)
+
+    function renderFrame() {
+      requestAnimationFrame(renderFrame)
+
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
+      gl.clearColor(0.1, 0.1, 0.1, 1)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      {      
+        // Bind webglbuffer 
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+        
+        // Link positions to vertexBuffer, supply array to webglbuffer
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
+        
+        // Enable the program on GPU
+        gl.enableVertexAttribArray(positionAttributeLocation)
+
+        // Tell to the GPU how to "unpack" the vertexBuffer WebGLBuffer into the position attribute
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+      }
+
+      // Same for uv buffer (texture colors)
+      {
+        gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.DYNAMIC_DRAW)
+        gl.enableVertexAttribArray(uvAttributeLocation)
+        gl.vertexAttribPointer(uvAttributeLocation, 2, gl.FLOAT, false, 0, 0)
+      }
+
+      // Draw the quad by rasterizing the two triangles vertices
+      {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+        // Supply indices unsigned int with 16 bits precision
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+      }
+
+      // Explicitly use my webgl program
+      gl.useProgram(drawingProgram) 
+
+      // Activate the texture to the textureLocation gl.TEXTURE0
+      // gl.activeTexture(gl.TEXTURE0, texture)
+      // Bind the texture to the textureLocation
+      // gl.bindTexture(gl.TEXTURE_2D, texture)
+
+
+      // ...
+      if (textures.length > 0) {
+        textures.forEach((texture, index) => {
+          gl.activeTexture(gl.TEXTURE0 + index)
+          gl.bindTexture(gl.TEXTURE_2D, texture)
+        })
+
+        // iv = uniform with integer vector
+        gl.uniform1iv(texturesUniform, [0, 1, 2, 3, 4, 5, 6])
+
+        gl.uniform1i(previouSliderIndexUniform, previousSlideIndex)
+        gl.uniform1i(activeSliderIndexUniform, activeSlideIndex)
+
+        gl.uniform1f(slideMixFactorUniform, slideMixFactor)
+        
+        // Issue a draw command to the GPU
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
+      }
+
+    }
+
+
+    // Load image with Promise
+    function loadimage(url) {
+      return new Promise((resolve, reject) => {
+        const image = new Image()
+        image.src = url
+        image.onload = () => resolve(image)
+        image.onerror = reject
+      })
+    }
+
+    // WebGl Helpers modules
+
+    function createShader(type, source) { // return WebGLShader Object
+      const shader = gl.createShader(type) // vertex or fragment
+      gl.shaderSource(shader, source)
+      gl.compileShader(shader)
+
+      if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        return shader
+      } 
+      
+      console.error(`
+        Error while compiling shader:
+        ${gl.getShaderInfoLog(shader)}
+      `)
+      gl.deleteShader(shader)
+    }
+
+    function createProgram(vertexShader, fragmentShader) { // return WebGLProgram Object
+      const program = gl.createProgram()
+      gl.attachShader(program, vertexShader)
+      gl.attachShader(program, fragmentShader)
+      gl.linkProgram(program)
+
+      if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        return program
+      }
+
+      console.error(`
+        Error while linking program on the GPU:
+        ${gl.getShaderInfoLog(program)}
+      `)
+      gl.deleteProgram(program)
+    }
+
+  </script>
+</body>
+</html>
